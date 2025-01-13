@@ -2,19 +2,47 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Auth;
 
 class UserController extends Controller
 {
+    public function logout()
+    {
+        Auth::logout();
+        return redirect("/");
+    }
     public  function register(Request $request)
     {
-        $incomingField = $request->validate([
-            'username' => ['required', 'min:3', 'max:10'],
-            'email' => ['required', 'email'],
+        $incomingFields = $request->validate([
+            'name' => ['required', 'min:3', 'max:10', Rule::unique('users', 'name')],
+            'email' => ['required', 'email', Rule::unique('users', 'email')],
             'password' => ['required', 'min:6', 'max:255'],
         ]);
 
-        dd($incomingField);
-        return "KAMALLLLLL";
+        $incomingFields['password'] = bcrypt($incomingFields['password']);
+        $user =  User::create($incomingFields);
+
+        //Auth is global utility function
+        Auth::login($user);
+
+        return redirect('/');
+    }
+
+    public function login(Request $request)
+    {
+        $incomingFields = $request->validate([
+            'loginname' => ['required'],
+            'loginpassword' => ['required'],
+        ]);
+
+
+        if (Auth::attempt(['name' => $incomingFields['loginname'], 'password' => $incomingFields['loginpassword']])) {
+            $request->session()->regenerate();
+        }
+
+        return redirect('/');
     }
 }
