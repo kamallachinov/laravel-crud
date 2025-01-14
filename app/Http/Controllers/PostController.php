@@ -28,11 +28,24 @@ class PostController extends Controller
 
     public function showEditScreen(Post $post)
     {
+
+        if ($post->user_id !== Auth::id()) {
+            return redirect('/');
+        }
+
+
         return view('edit-post', ['post' => $post]);
     }
 
     public function updatePost(Request $request, Post $post)
     {
+
+
+        if ($post->user_id !== Auth::id()) {
+            return redirect('/');
+        }
+
+
         $incomingFields = $request->validate([
             'title' => ['required', 'min:3', 'max:255'],
             'body' => ['required', 'min:3'],
@@ -42,6 +55,15 @@ class PostController extends Controller
         $incomingFields['body'] = strip_tags($incomingFields['body']);
 
         $post->update($incomingFields);
+
+        return redirect('/');
+    }
+
+    public function deletePost(Post $post)
+    {
+        if ($post->user_id === Auth::id()) {
+            $post->delete();
+        }
 
         return redirect('/');
     }
